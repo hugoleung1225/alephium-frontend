@@ -118,7 +118,8 @@ export default {
         }
       ],
       'expo-localization',
-      'expo-secure-store'
+      'expo-secure-store',
+      'expo-video'
     ],
     extra: {
       eas: {
