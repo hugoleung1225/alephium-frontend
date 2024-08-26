@@ -16,16 +16,20 @@ You should have received a copy of the GNU Lesser General Public License
 along with the library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { AddressHash } from '@alephium/shared'
+import { AddressHash, CURRENCIES } from '@alephium/shared'
 import { StackScreenProps } from '@react-navigation/stack'
-import { useEffect, useState } from 'react'
+import { colord } from 'colord'
+import { BlurView } from 'expo-blur'
+import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { Platform, StyleSheet } from 'react-native'
 import { Portal } from 'react-native-portalize'
-import Animated, { useAnimatedStyle, withDelay, withSpring } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import styled, { useTheme } from 'styled-components/native'
 
-import { defaultSpringConfiguration } from '~/animations/reanimated/reanimatedAnimations'
 import AddressesTokensList from '~/components/AddressesTokensList'
+import Amount from '~/components/Amount'
 import AppText from '~/components/AppText'
 import BalanceSummary from '~/components/BalanceSummary'
 import Button from '~/components/buttons/Button'
@@ -35,16 +39,18 @@ import BottomModal from '~/components/layout/BottomModal'
 import { ModalContent } from '~/components/layout/ModalContent'
 import { BottomModalScreenTitle, ScreenSection } from '~/components/layout/Screen'
 import RefreshSpinner from '~/components/RefreshSpinner'
-import WalletSwitchButton from '~/components/WalletSwitchButton'
 import BuyModal from '~/features/buy/BuyModal'
 import FundPasswordReminderModal from '~/features/fund-password/FundPasswordReminderModal'
+import useScreenScrollHandler from '~/hooks/layout/useScreenScrollHandler'
 import { useAppSelector } from '~/hooks/redux'
 import { InWalletTabsParamList } from '~/navigation/InWalletNavigation'
 import { ReceiveNavigationParamList } from '~/navigation/ReceiveNavigation'
 import { SendNavigationParamList } from '~/navigation/SendNavigation'
 import { getIsNewWallet, storeIsNewWallet } from '~/persistent-storage/wallet'
+import AnimatedCirclesBackground from '~/screens/Dashboard/AnimatedCirclesBackground'
 import HeaderButtons from '~/screens/Dashboard/HeaderButtons'
 import SwitchNetworkModal from '~/screens/SwitchNetworkModal'
+import { makeSelectAddressesTokensWorth } from '~/store/addresses/addressesSelectors'
 import { selectAddressIds, selectTotalBalance } from '~/store/addressesSlice'
 import { DEFAULT_MARGIN } from '~/style/globalStyle'
 
@@ -56,24 +62,24 @@ interface ScreenProps
     BottomBarScrollScreenProps {}
 
 const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
+  const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const theme = useTheme()
+  const { screenScrollY, screenScrollHandler } = useScreenScrollHandler()
+  const currency = useAppSelector((s) => s.settings.currency)
   const totalBalance = useAppSelector(selectTotalBalance)
+  const selectAddessesTokensWorth = useMemo(makeSelectAddressesTokensWorth, [])
+  const balanceInFiat = useAppSelector(selectAddessesTokensWorth)
   const addressHashes = useAppSelector(selectAddressIds) as AddressHash[]
   const addressesStatus = useAppSelector((s) => s.addresses.status)
   const isMnemonicBackedUp = useAppSelector((s) => s.wallet.isMnemonicBackedUp)
   const needsFundPasswordReminder = useAppSelector((s) => s.fundPassword.needsReminder)
-  const { t } = useTranslation()
 
   const [isFundPasswordReminderModalOpen, setIsFundPasswordReminderModalOpen] = useState(false)
   const [isBackupReminderModalOpen, setIsBackupReminderModalOpen] = useState(!isMnemonicBackedUp)
   const [isSwitchNetworkModalOpen, setIsSwitchNetworkModalOpen] = useState(false)
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false)
   const [isNewWallet, setIsNewWallet] = useState(false)
-
-  const buttonsRowStyle = useAnimatedStyle(() => ({
-    height: withDelay(800, withSpring(65, defaultSpringConfiguration)),
-    opacity: withDelay(800, withSpring(1, defaultSpringConfiguration))
-  }))
 
   useEffect(() => {
     if (isMnemonicBackedUp && needsFundPasswordReminder) {
@@ -122,26 +128,31 @@ const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
       hasBottomBar
       verticalGap
       contrastedBg
+      onScroll={screenScrollHandler}
+      floatingHeader
+      headerScrollEffectOffset={70}
       headerOptions={{
-        headerRight: () => <HeaderButtons />,
-        headerLeft: () => <WalletSwitchButton />
+        headerTitle: () => <Amount value={balanceInFiat} isFiat suffix={CURRENCIES[currency].symbol} bold />
       }}
       {...props}
     >
-      <BalanceAndButtons>
+      <AnimatedCirclesBackground scrollY={screenScrollY} />
+      <WalletCard style={{ marginTop: insets.top }}>
+        {Platform.OS === 'android' ? (
+          <TransparentCardBackground style={StyleSheet.absoluteFill} />
+        ) : (
+          <BlurView
+            style={StyleSheet.absoluteFill}
+            intensity={80}
+            tint={theme.name === 'dark' ? 'systemThickMaterialDark' : 'systemThickMaterialLight'}
+          />
+        )}
+        <WalletCardHeader>
+          <HeaderButtons />
+        </WalletCardHeader>
         <BalanceSummary dateLabel={t('VALUE TODAY')} />
         {totalBalance > BigInt(0) && (
-          <ButtonsRowContainer
-            style={[
-              buttonsRowStyle,
-              {
-                shadowColor: 'black',
-                shadowOffset: { height: 5, width: 0 },
-                shadowOpacity: theme.name === 'dark' ? 0.5 : 0.05,
-                shadowRadius: 5
-              }
-            ]}
-          >
+          <ButtonsRowContainer>
             <Button onPress={handleSendPress} iconProps={{ name: 'send' }} variant="contrast" round flex short />
             <Button onPress={handleReceivePress} iconProps={{ name: 'download' }} variant="contrast" round flex short />
             <Button
@@ -154,7 +165,7 @@ const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
             />
           </ButtonsRowContainer>
         )}
-      </BalanceAndButtons>
+      </WalletCard>
       <AddressesTokensList />
       {totalBalance === BigInt(0) && addressesStatus === 'initialized' && (
         <EmptyPlaceholder>
@@ -243,12 +254,23 @@ const DashboardScreenStyled = styled(BottomBarScrollScreen)`
   gap: 15px;
 `
 
-const BalanceAndButtons = styled.View`
+const WalletCard = styled.View`
   flex: 1;
+  margin: 0 ${DEFAULT_MARGIN / 2}px;
+  border-radius: 38px;
+  overflow: hidden;
+`
+
+const WalletCardHeader = styled.View`
+  padding: 20px 20px 0;
+`
+
+const TransparentCardBackground = styled.View`
+  background-color: ${({ theme }) => colord(theme.bg.primary).alpha(0.95).toHex()};
 `
 
 const ButtonsRowContainer = styled(Animated.View)`
-  margin: 0 ${DEFAULT_MARGIN + 20}px;
+  margin: 10px ${DEFAULT_MARGIN}px 20px;
   flex-direction: row;
   border-radius: 100px;
   align-items: center;
