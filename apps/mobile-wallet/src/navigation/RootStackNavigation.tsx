@@ -42,7 +42,7 @@ import { loadBiometricsSettings } from '~/persistent-storage/settings'
 import {
   deleteDeprecatedWallet,
   getDeprecatedStoredWallet,
-  getStoredWallet,
+  getStoredWalletMetadata,
   migrateDeprecatedMnemonic,
   storedWalletExists
 } from '~/persistent-storage/wallet'
@@ -140,11 +140,11 @@ export default RootStackNavigation
 const AppUnlockModal = () => {
   const dispatch = useAppDispatch()
   const isWalletUnlocked = useAppSelector((s) => s.wallet.isUnlocked)
+  const lastUsedWalletId = useAppSelector((s) => s.wallet.id)
+  const biometricsRequiredForAppAccess = useAppSelector((s) => s.settings.usesBiometrics)
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
   const { triggerBiometricsAuthGuard } = useBiometricsAuthGuard()
   const { t } = useTranslation()
-
-  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false)
 
   const { width, height } = Dimensions.get('window')
   const [dimensions, setDimensions] = useState({ width, height })
@@ -155,25 +155,19 @@ const AppUnlockModal = () => {
     setDimensions({ width, height })
   }
 
-  const openAuthModal = useCallback(() => {
-    setIsAuthModalVisible(true)
-  }, [])
-
   const initializeAppWithStoredWallet = useCallback(async () => {
     try {
-      dispatch(walletUnlocked(await getStoredWallet()))
+      dispatch(walletUnlocked(await getStoredWalletMetadata()))
 
       const lastRoute = rootStackNavigationRef.current?.getCurrentRoute()?.name
 
       if (!lastRoute || ['LandingScreen', 'LoginWithPinScreen'].includes(lastRoute)) {
         resetNavigation(navigation)
       }
-
-      setIsAuthModalVisible(false)
     } catch (error) {
       const message = 'Could not initialize app with stored wallet'
       showExceptionToast(error, message)
-      sendAnalytics({ type: 'error', message })
+      sendAnalytics({ type: 'error', error, message })
     }
   }, [dispatch, navigation])
 
@@ -188,7 +182,6 @@ const AppUnlockModal = () => {
         try {
           await triggerBiometricsAuthGuard({
             settingsToCheck: 'appAccess',
-            onPromptDisplayed: openAuthModal,
             successCallback: initializeAppWithStoredWallet
           })
 
@@ -212,6 +205,7 @@ const AppUnlockModal = () => {
             await migrateDeprecatedMnemonic(deprecatedWallet.mnemonic)
 
             dispatch(mnemonicMigrated())
+            sendAnalytics({ event: 'Mnemonic migrated' })
 
             initializeAppWithStoredWallet()
           } catch {
@@ -252,23 +246,16 @@ const AppUnlockModal = () => {
         showExceptionToast(e, t('Could not unlock app'))
       }
     }
-  }, [
-    dispatch,
-    initializeAppWithStoredWallet,
-    isWalletUnlocked,
-    navigation,
-    openAuthModal,
-    t,
-    triggerBiometricsAuthGuard
-  ])
+  }, [dispatch, initializeAppWithStoredWallet, isWalletUnlocked, navigation, t, triggerBiometricsAuthGuard])
 
-  useAutoLock({
-    unlockApp,
-    onAuthRequired: openAuthModal
-  })
+  useAutoLock(unlockApp)
 
   return (
-    <Modal animationType="none" onLayout={handleScreenLayoutChange} visible={isAuthModalVisible}>
+    <Modal
+      visible={!!lastUsedWalletId && biometricsRequiredForAppAccess && !isWalletUnlocked}
+      onLayout={handleScreenLayoutChange}
+      animationType="none"
+    >
       <View style={{ backgroundColor: 'black', flex: 1 }}>
         <CoolAlephiumCanvas {...dimensions} onPress={unlockApp} />
       </View>

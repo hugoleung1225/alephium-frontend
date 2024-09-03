@@ -91,14 +91,15 @@ const BalanceSummary = ({ dateLabel, style, ...props }: BalanceSummaryProps) => 
               round
               flex
             />
-            <Button
+            {/*<Button
+              title={t('Buy')}
               onPress={() => setIsBuyModalOpen(true)}
               iconProps={{ name: 'credit-card' }}
               variant="highlight"
               short
               round
               flex
-            />
+            />*/}
           </ReceiveFundsButtonContainer>
         )}
       </BalanceSummaryContainer>

@@ -43,6 +43,7 @@ import BuyModal from '~/features/buy/BuyModal'
 import FundPasswordReminderModal from '~/features/fund-password/FundPasswordReminderModal'
 import useScreenScrollHandler from '~/hooks/layout/useScreenScrollHandler'
 import { useAppSelector } from '~/hooks/redux'
+import { useAsyncData } from '~/hooks/useAsyncData'
 import { InWalletTabsParamList } from '~/navigation/InWalletNavigation'
 import { ReceiveNavigationParamList } from '~/navigation/ReceiveNavigation'
 import { SendNavigationParamList } from '~/navigation/SendNavigation'
@@ -79,7 +80,12 @@ const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
   const [isBackupReminderModalOpen, setIsBackupReminderModalOpen] = useState(!isMnemonicBackedUp)
   const [isSwitchNetworkModalOpen, setIsSwitchNetworkModalOpen] = useState(false)
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false)
-  const [isNewWallet, setIsNewWallet] = useState(false)
+  const { data: isNewWallet } = useAsyncData(getIsNewWallet)
+
+  const buttonsRowStyle = useAnimatedStyle(() => ({
+    height: withDelay(800, withSpring(65, defaultSpringConfiguration)),
+    opacity: withDelay(800, withSpring(1, defaultSpringConfiguration))
+  }))
 
   useEffect(() => {
     if (isMnemonicBackedUp && needsFundPasswordReminder) {
@@ -88,17 +94,14 @@ const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
   }, [isMnemonicBackedUp, needsFundPasswordReminder])
 
   useEffect(() => {
+    if (!isNewWallet) return
+
     try {
-      getIsNewWallet().then((isNew) => {
-        if (isNew !== undefined) {
-          setIsNewWallet(isNew)
-          storeIsNewWallet(false)
-        }
-      })
+      storeIsNewWallet(false)
     } catch (e) {
       console.error(e)
     }
-  }, [])
+  }, [isNewWallet])
 
   const handleReceivePress = () => {
     if (addressHashes.length === 1) {
@@ -155,14 +158,14 @@ const DashboardScreen = ({ navigation, ...props }: ScreenProps) => {
           <ButtonsRowContainer>
             <Button onPress={handleSendPress} iconProps={{ name: 'send' }} variant="contrast" round flex short />
             <Button onPress={handleReceivePress} iconProps={{ name: 'download' }} variant="contrast" round flex short />
-            <Button
+            {/*<Button
               onPress={() => setIsBuyModalOpen(true)}
               iconProps={{ name: 'credit-card' }}
               variant="contrast"
               round
               flex
               short
-            />
+            />*/}
           </ButtonsRowContainer>
         )}
       </WalletCard>

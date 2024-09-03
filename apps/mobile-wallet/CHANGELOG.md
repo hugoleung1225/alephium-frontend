@@ -1,5 +1,18 @@
 # @alephium/mobile-wallet
 
+## 1.1.5
+
+### Patch Changes
+
+- 52a5834: Fix wallet delete
+- 5e8c14b: Do not display authentication modal on app fresh install
+
+## 1.1.4
+
+### Patch Changes
+
+- 18ddd26: Fix authentication issues
+
 ## 1.1.3
 
 ### Patch Changes
