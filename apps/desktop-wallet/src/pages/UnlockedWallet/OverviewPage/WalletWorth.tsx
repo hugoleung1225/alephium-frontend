@@ -17,6 +17,7 @@ along with the library. If not, see <http://www.gnu.org/licenses/>.
 */
 
 import { memo } from 'react'
+import styled from 'styled-components'
 
 import useFetchWalletWorth from '@/api/apiDataHooks/wallet/useFetchWalletWorth'
 import WorthOverview from '@/components/WorthOverview'
@@ -28,7 +29,11 @@ interface WalletWorthProps {
 const WalletWorth = memo((props: WalletWorthProps) => {
   const { data: worth, isLoading } = useFetchWalletWorth()
 
-  return <WorthOverview worth={worth} isLoading={isLoading} {...props} />
+  return <WorthOverviewStyled worth={worth} isLoading={isLoading} {...props} />
 })
 
 export default WalletWorth
+
+const WorthOverviewStyled = styled(WorthOverview)`
+  font-size: 42px;
+`

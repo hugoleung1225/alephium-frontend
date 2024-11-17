@@ -24,10 +24,18 @@ interface WorthOverviewProps {
   worth: number
   isLoading: boolean
   overrideWorth?: number
+  className?: string
 }
 
-const WorthOverview = ({ overrideWorth, isLoading, worth }: WorthOverviewProps) => (
-  <WorthOverviewStyled value={overrideWorth ?? worth} isFiat isLoading={isLoading} loaderHeight={32} tabIndex={0} />
+const WorthOverview = ({ overrideWorth, isLoading, worth, className }: WorthOverviewProps) => (
+  <WorthOverviewStyled
+    value={overrideWorth ?? worth}
+    isFiat
+    isLoading={isLoading}
+    loaderHeight={32}
+    tabIndex={0}
+    className={className}
+  />
 )
 
 export default WorthOverview
