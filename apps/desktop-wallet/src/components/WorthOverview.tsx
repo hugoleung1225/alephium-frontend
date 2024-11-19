@@ -32,7 +32,7 @@ const WorthOverview = ({ overrideWorth, isLoading, worth, className }: WorthOver
     value={overrideWorth ?? worth}
     isFiat
     isLoading={isLoading}
-    loaderHeight={32}
+    loaderHeight={58}
     tabIndex={0}
     className={className}
   />
