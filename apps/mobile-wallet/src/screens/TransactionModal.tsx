@@ -85,7 +85,7 @@ const TransactionModal = ({ tx, ...props }: TransactionModalProps) => {
                 isUnknownToken={!symbol}
                 highlight={!isMoved}
                 showPlusMinus={!isMoved}
-                fullPrecision
+                nbOfDecimalsToShow={4}
                 bold
               />
             ))}
