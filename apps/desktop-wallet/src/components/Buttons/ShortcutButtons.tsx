@@ -17,7 +17,7 @@ along with the library. If not, see <http://www.gnu.org/licenses/>.
 */
 
 import { AddressHash } from '@alephium/shared'
-import { ArrowDown, ArrowUp, Settings } from 'lucide-react'
+import { ArrowDownToLine, CreditCard, Send, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -45,6 +45,7 @@ export const ShortcutButtonsGroupWallet = ({ ...buttonProps }: ShortcutButtonsGr
     <ButtonsContainer>
       <ReceiveButton addressHash={defaultAddressHash} {...buttonProps} />
       <SendButton addressHash={defaultAddressHash} {...buttonProps} />
+      <BuyButton addressHash={defaultAddressHash} {...buttonProps} />
     </ButtonsContainer>
   )
 }
@@ -57,6 +58,7 @@ export const ShortcutButtonsGroupAddress = ({ addressHash, ...buttonProps }: Sho
   <ButtonsContainer>
     <ReceiveButton addressHash={addressHash} {...buttonProps} />
     <SendButton addressHash={addressHash} {...buttonProps} />
+    <BuyButton addressHash={addressHash} {...buttonProps} />
     <SettingsButton addressHash={addressHash} {...buttonProps} />
   </ButtonsContainer>
 )
@@ -117,10 +119,9 @@ const ReceiveButton = ({
       variant="contrast"
       borderless
       onClick={handleReceiveClick}
-      Icon={ArrowDown}
+      Icon={ArrowDownToLine}
       highlight={highlight}
       rounded
-      short
     >
       <ButtonText>{t('Receive')}</ButtonText>
     </ShortcutButton>
@@ -147,22 +148,48 @@ const SendButton = ({ addressHash, analyticsOrigin, solidBackground, highlight }
       variant="contrast"
       borderless
       onClick={handleSendClick}
-      Icon={ArrowUp}
+      Icon={Send}
       highlight={highlight}
       rounded
-      short
     >
       <ButtonText>{t('Send')}</ButtonText>
     </ShortcutButton>
   )
 }
 
+const BuyButton = ({ addressHash, analyticsOrigin, solidBackground, highlight }: ShortcutButtonsGroupAddressProps) => {
+  const { sendAnalytics } = useAnalytics()
+  const { t } = useTranslation()
+  const fromAddress = useAppSelector((s) => selectAddressByHash(s, addressHash))
+  const dispatch = useAppDispatch()
+
+  if (!fromAddress) return null
+
+  const handleBuyClick = () => {
+    dispatch(openModal({ name: 'BuyModal', props: { addressHash } }))
+    sendAnalytics({ event: 'Send button clicked', props: { origin: analyticsOrigin } })
+  }
+
+  return (
+    <ShortcutButton
+      transparent={!solidBackground}
+      role="primary"
+      variant="contrast"
+      borderless
+      onClick={handleBuyClick}
+      Icon={CreditCard}
+      highlight={highlight}
+      rounded
+    >
+      <ButtonText>{t('Buy')}</ButtonText>
+    </ShortcutButton>
+  )
+}
+
 const ShortcutButton = styled(Button)<Pick<ShortcutButtonBaseProps, 'highlight'>>`
   margin: 0;
-  width: auto;
-  height: 42px;
   box-shadow: none;
-  max-width: initial;
+  min-width: 100px;
 `
 
 const ButtonText = styled.div`
@@ -174,5 +201,5 @@ const ButtonsContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 12px;
 `

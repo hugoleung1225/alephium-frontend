@@ -16,31 +16,20 @@ You should have received a copy of the GNU Lesser General Public License
 along with the library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import styled from 'styled-components'
+import { AddressHash } from '@alephium/shared'
+import { memo } from 'react'
 
-import Amount from '@/components/Amount'
+import { ModalBaseProp } from '@/features/modals/modalTypes'
+import CenteredModal from '@/modals/CenteredModal'
 
-interface WorthOverviewProps {
-  worth: number
-  isLoading: boolean
-  overrideWorth?: number
-  className?: string
+export interface BuyModalProps {
+  addressHash: AddressHash
 }
 
-const WorthOverview = ({ overrideWorth, isLoading, worth, className }: WorthOverviewProps) => (
-  <WorthOverviewStyled
-    value={overrideWorth ?? worth}
-    isFiat
-    isLoading={isLoading}
-    loaderHeight={54}
-    tabIndex={0}
-    className={className}
-  />
-)
+const BuyModal = memo(({ id }: ModalBaseProp & BuyModalProps) => (
+  <CenteredModal id={id} title="Buy">
+    yo
+  </CenteredModal>
+))
 
-export default WorthOverview
-
-const WorthOverviewStyled = styled(Amount)`
-  font-size: 34px;
-  font-weight: var(--fontWeight-semiBold);
-`
+export default BuyModal
