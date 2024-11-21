@@ -490,5 +490,6 @@
   "Video thumbnail": "Video thumbnail",
   "Unsupported media type": "Unsupported media type",
   "You need to be on testnet or devnet in order to use the faucet.": "You need to be on testnet or devnet in order to use the faucet.",
-  "Buy": "Buy"
+  "Buy": "Buy",
+  "banxaDisclaimer": "You are about to access 3rd party services provided by <1>Banxa.com</1> through an in-app browser. Alephium does not control Banxa’s services. Banxa’s terms and conditions will apply, so please read and understand them before proceeding."
 }
